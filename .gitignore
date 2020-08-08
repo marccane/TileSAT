@@ -1,3 +1,11 @@
+/bin
+/gitignore
+/obj
+/tmp
+*.depend
+*.layout
+
+
 # Prerequisites
 *.d
 
