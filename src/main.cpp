@@ -9,26 +9,19 @@ namespace fs = std::filesystem;
 
 const unsigned NORD=0, EST=1, SUD=2, OEST=3;
 
-//vector<int> *condicionalsHor, *condicionalsVert;
+vector<int> *condicionalsHor, *condicionalsVert;
 
 void generarClausCondicionalHor(unsigned initVar, const vector<vector<int>> &inputTiles, Clausules &c){
     const int numVarsPerCasella = inputTiles.size();
 
-    for(int k=0;k<numVarsPerCasella;k++){
+    for(int tileId=0;tileId<numVarsPerCasella;tileId++){
         vector<int> clausula;
-        const int tileId=k;
-        const vector<int> &ourTile = inputTiles[tileId];
 
         clausula.push_back(-(initVar+tileId));
-        //time improvement is negligible and reduces readability
-        /*const auto &ch = condicionalsHor[k];
+        const auto &ch = condicionalsHor[tileId];
         for(int i=0;i<ch.size();i++)
-            clausula.push_back(initVar+numVarsPerCasella+ch[i]);*/
-        for(int i=0;i<numVarsPerCasella;i++){
-            const vector<int> &tmpTile = inputTiles[i];
-            if(ourTile[EST]==tmpTile[OEST])
-                clausula.push_back(initVar+numVarsPerCasella+i);
-        }
+            clausula.push_back(initVar+numVarsPerCasella+ch[i]);
+
         c.addClause(clausula);
     }
 }
@@ -36,22 +29,18 @@ void generarClausCondicionalHor(unsigned initVar, const vector<vector<int>> &inp
 void generarClausCondicionalVertical(unsigned initVar, const unsigned amplada, const vector<vector<int>> &inputTiles, Clausules &c){
     const int numVarsPerCasella = inputTiles.size();
 
-    for(int k=0;k<numVarsPerCasella;k++){
+    for(int tileId=0;tileId<numVarsPerCasella;tileId++){
         vector<int> clausula;
-        const int tileId=k;
-        const vector<int> &ourTile = inputTiles[tileId];
-
         clausula.push_back(-(initVar+tileId));
-        for(int i=0;i<numVarsPerCasella;i++){
-            const vector<int> &tmpTile = inputTiles[i];
-            if(ourTile[SUD]==tmpTile[NORD])
-                clausula.push_back(initVar+numVarsPerCasella*amplada+i);
-        }
+        const auto &ch = condicionalsVert[tileId];
+        for(int i=0;i<ch.size();i++)
+            clausula.push_back(initVar+numVarsPerCasella*amplada+ch[i]);
+
         c.addClause(clausula);
     }
 }
 
-/*void preComputeConditionals(const vector<vector<int>> &inputTiles){
+void preComputeConditionals(const vector<vector<int>> &inputTiles){
     const int len = inputTiles.size();
     condicionalsHor = new vector<int>[len];
     condicionalsVert = new vector<int>[len];
@@ -66,13 +55,13 @@ void generarClausCondicionalVertical(unsigned initVar, const unsigned amplada, c
                 condicionalsVert[i].push_back(j);
         }
     }
-}*/
+}
 
 void generarTiles(Clausules &clausules, const int amplada, const int alcada, const vector<vector<int>> &inputTiles){
 
     const int numCaselles = amplada*alcada, numVarsPerCasella = inputTiles.size();
 
-    //preComputeConditionals(inputTiles);
+    preComputeConditionals(inputTiles);
 
     //Exactly one per cada casella
     int varAct = 1;
