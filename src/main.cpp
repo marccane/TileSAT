@@ -1,9 +1,11 @@
 #include <iostream>
 #include <vector>
 #include <fstream>
+#include <filesystem>
 #include "clausules.h"
 
 using namespace std;
+namespace fs = std::filesystem;
 
 const unsigned NORD=0, EST=1, SUD=2, OEST=3;
 
@@ -264,14 +266,25 @@ void doTiles(const string &inputTilesFile, bool printSolution, bool checkSolutio
         alcada = alcadaOverride;
 
     generarTiles(clausules, amplada, alcada, tiles);
-    const string cnfFolder = "tmp/", tempCnfFile = "out.cnf.gz", tempSolFilePath = cnfFolder + "sol.tiles";
+    const string tmp_folder = "tmp";
+
+    if(!fs::is_directory(tmp_folder)){
+        if(!fs::exists(tmp_folder)){
+            cout<<"Creating "<<tmp_folder<<" folder"<<endl;
+            fs::create_directory(tmp_folder);
+        }
+        else
+            throw tmp_folder + " is not a folder";
+    }
+
+    const string cnfFolder = tmp_folder + "/", tempCnfFile = "out.cnf.gz", tempSolFilePath = cnfFolder + "sol.tiles";
     clausules.guardarCNF(cnfFolder + tempCnfFile, amplada*alcada*nTiles, cleanInputFilename, nTiles, nColors, amplada, alcada, false);
 
     if(solve){
         //executem minisat
         bool noMinisatOutput = false;
         const string comanda = "minisat -var-decay=0.99 ", tempCnfOutput = "out.res", ignoreMinisatOutput = " >/dev/null";
-        string comandaAll = comanda + " " + cnfFolder+tempCnfFile + " " + cnfFolder + tempCnfOutput;
+        string comandaAll = comanda + " " + cnfFolder + tempCnfFile + " " + cnfFolder + tempCnfOutput;
         if(noMinisatOutput)
             comandaAll += ignoreMinisatOutput;
         int resultatMinisat = system(comandaAll.c_str());
