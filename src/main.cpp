@@ -7,11 +7,11 @@
 using namespace std;
 namespace fs = std::filesystem;
 
-const unsigned NORD=0, EST=1, SUD=2, OEST=3;
-
 struct Tile{
     unsigned nord, est, sud, oest;
-} *stub;
+} *stubTile;
+
+constexpr int NUM_TILE_ELEMENTS = sizeof(*stubTile)/sizeof(stubTile->nord);
 
 void generarClausCondicionalHor(unsigned initVar, const vector<Tile> &inputTiles, Clausules &c){
     const int numVarsPerCasella = inputTiles.size();
@@ -69,21 +69,14 @@ void generarTiles(Clausules &clausules, const int amplada, const int alcada, con
         for(int j=0;j<amplada;j++){ //per cada columna
             const int pos=(i*amplada+j)*numVarsPerCasella+1; //ULL
             if(j!=amplada-1){ //si no es ultima columna condicionem laterals
-                generarClausCondicionalHor(pos, inputTiles, clausules); // -(pos+tileId) v tilesCompatbiles()
+                generarClausCondicionalHor(pos, inputTiles, clausules);
             }
             if(i!=alcada-1){ //si no es ultima fila condicionem inferiors
                 generarClausCondicionalVertical(pos, amplada, inputTiles, clausules);
             }
         }
     }
-
-    //clausules.addClause(vector<int>{i*numVarsXCasella + val});
 }
-
-union TileAndArray{
-    Tile t;
-
-};
 
 vector<Tile> llegirTiles(string filename, int &numTiles, int &numColors, int &amplada, int &alcada){
 
@@ -98,11 +91,10 @@ vector<Tile> llegirTiles(string filename, int &numTiles, int &numColors, int &am
     file >> numTiles >> numColors >> amplada >> alcada;
 
     for(int i=0;i<numTiles;i++){
-        constexpr int numTileElements = sizeof(*stub)/sizeof(stub->nord);
-        decltype(stub->nord) tile[numTileElements]; //trust me, i'm an engineer. Narrator: It segfaulted
+        decltype(stubTile->nord) tile[NUM_TILE_ELEMENTS];
         for(int i=0;i<4;i++)
             file >> tile[i];
-        tiles.push_back(*(Tile*)tile);
+        tiles.push_back(*reinterpret_cast<Tile*>(tile));
     }
 
     return tiles; //spray and pray for RVO
