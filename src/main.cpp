@@ -9,70 +9,49 @@ namespace fs = std::filesystem;
 
 const unsigned NORD=0, EST=1, SUD=2, OEST=3;
 
-//vector<int> *condicionalsHor, *condicionalsVert;
+struct Tile{
+    unsigned nord, est, sud, oest;
+} *stub;
 
-void generarClausCondicionalHor(unsigned initVar, const vector<vector<int>> &inputTiles, Clausules &c){
+void generarClausCondicionalHor(unsigned initVar, const vector<Tile> &inputTiles, Clausules &c){
     const int numVarsPerCasella = inputTiles.size();
 
     for(int k=0;k<numVarsPerCasella;k++){
         vector<int> clausula;
         const int tileId=k;
-        const vector<int> &ourTile = inputTiles[tileId];
+        const auto &ourTile = inputTiles[tileId];
 
         clausula.push_back(-(initVar+tileId));
-        //time improvement is negligible and reduces readability
-        /*const auto &ch = condicionalsHor[k];
-        for(int i=0;i<ch.size();i++)
-            clausula.push_back(initVar+numVarsPerCasella+ch[i]);*/
         for(int i=0;i<numVarsPerCasella;i++){
-            const vector<int> &tmpTile = inputTiles[i];
-            if(ourTile[EST]==tmpTile[OEST])
+            const auto &tmpTile = inputTiles[i];
+            if(ourTile.est==tmpTile.oest)
                 clausula.push_back(initVar+numVarsPerCasella+i);
         }
         c.addClause(clausula);
     }
 }
 
-void generarClausCondicionalVertical(unsigned initVar, const unsigned amplada, const vector<vector<int>> &inputTiles, Clausules &c){
+void generarClausCondicionalVertical(unsigned initVar, const unsigned amplada, const vector<Tile> &inputTiles, Clausules &c){
     const int numVarsPerCasella = inputTiles.size();
 
     for(int k=0;k<numVarsPerCasella;k++){
         vector<int> clausula;
         const int tileId=k;
-        const vector<int> &ourTile = inputTiles[tileId];
+        const auto &ourTile = inputTiles[tileId];
 
         clausula.push_back(-(initVar+tileId));
         for(int i=0;i<numVarsPerCasella;i++){
-            const vector<int> &tmpTile = inputTiles[i];
-            if(ourTile[SUD]==tmpTile[NORD])
+            const auto &tmpTile = inputTiles[i];
+            if(ourTile.sud==tmpTile.nord)
                 clausula.push_back(initVar+numVarsPerCasella*amplada+i);
         }
         c.addClause(clausula);
     }
 }
 
-/*void preComputeConditionals(const vector<vector<int>> &inputTiles){
-    const int len = inputTiles.size();
-    condicionalsHor = new vector<int>[len];
-    condicionalsVert = new vector<int>[len];
-
-    for(int i=0;i<len;i++){
-        const auto &t1 = inputTiles[i];
-        for(int j=0;j<len;j++){
-            const auto &t2 = inputTiles[j];
-            if(t1[EST]==t2[OEST])
-                condicionalsHor[i].push_back(j);
-            if(t1[SUD]==t2[NORD])
-                condicionalsVert[i].push_back(j);
-        }
-    }
-}*/
-
-void generarTiles(Clausules &clausules, const int amplada, const int alcada, const vector<vector<int>> &inputTiles){
+void generarTiles(Clausules &clausules, const int amplada, const int alcada, const vector<Tile> &inputTiles){
 
     const int numCaselles = amplada*alcada, numVarsPerCasella = inputTiles.size();
-
-    //preComputeConditionals(inputTiles);
 
     //Exactly one per cada casella
     int varAct = 1;
@@ -101,12 +80,16 @@ void generarTiles(Clausules &clausules, const int amplada, const int alcada, con
     //clausules.addClause(vector<int>{i*numVarsXCasella + val});
 }
 
-vector<vector<int>> llegirTiles(string filename, int &numTiles, int &numColors, int &amplada, int &alcada){
+union TileAndArray{
+    Tile t;
+
+};
+
+vector<Tile> llegirTiles(string filename, int &numTiles, int &numColors, int &amplada, int &alcada){
 
     ifstream file;
     string buff;
-    vector<vector<int>> tiles;
-    vector<int> tile(4);
+    vector<Tile> tiles;
 
     file.open(filename);
     if(!file)
@@ -115,16 +98,14 @@ vector<vector<int>> llegirTiles(string filename, int &numTiles, int &numColors, 
     file >> numTiles >> numColors >> amplada >> alcada;
 
     for(int i=0;i<numTiles;i++){
-        tile.clear();
-        for(int i=0;i<4;i++){
-            int subtile;
-            file >> subtile;
-            tile.push_back(subtile);
-        }
-        tiles.push_back(tile);
+        constexpr int numTileElements = sizeof(*stub)/sizeof(stub->nord);
+        decltype(stub->nord) tile[numTileElements]; //trust me, i'm an engineer. Narrator: It segfaulted
+        for(int i=0;i<4;i++)
+            file >> tile[i];
+        tiles.push_back(*(Tile*)tile);
     }
 
-    return tiles;
+    return tiles; //spray and pray for RVO
 }
 
 //Pre: No hi ha 2 variables diferents marcades en una sola casella
@@ -213,7 +194,7 @@ void convertirAMatriuSolucio(const vector<bool> &varsSolucio, vector<vector<int>
 }
 
 //Post: retorna cert si la solucio és correcte, fals en c.c.
-bool comprovarSolucio(const vector<vector<int>> &tiles, const vector<vector<int>> &tilesSolucio, int alcada, int amplada, int numTiles){
+bool comprovarSolucio(const vector<Tile> &tiles, const vector<vector<int>> &tilesSolucio, int alcada, int amplada, int numTiles){
 
     for(int i=0;i<amplada-1;i++){
         for(int j=0;j<alcada-1;j++){
@@ -222,7 +203,7 @@ bool comprovarSolucio(const vector<vector<int>> &tiles, const vector<vector<int>
             const auto &tileDreta = tiles[tilesSolucio[i+1][j]-1];
             const auto &tileInferior = tiles[tilesSolucio[i][j+1]-1];
 
-            if(tileActual[EST] != tileDreta[OEST] || tileActual[SUD] != tileInferior[NORD])
+            if(tileActual.est != tileDreta.oest || tileActual.sud != tileInferior.nord)
                 return false;
         }
     }
@@ -254,7 +235,7 @@ string cleanFilename(string filename){
 void doTiles(const string &inputTilesFile, bool printSolution, bool checkSolution, bool drawTiles, bool solve=true, int ampladaOverride=-1, int alcadaOverride=-1){
 
     Clausules clausules;
-    vector<vector<int>> tiles; //ULL! les tiles van de 0..nTiles, pero tilesSolucio va de 1..=nTiles
+    vector<Tile> tiles; //ULL! les tiles van de 0..nTiles, pero tilesSolucio va de 1..=nTiles
     vector<bool> varsSolucio;
     int nTiles, nColors, amplada, alcada;
     const string cleanInputFilename = cleanFilename(inputTilesFile);
@@ -375,7 +356,7 @@ int main(int argc, char** argv)
         string minisatFilename = argv[3];
 
         int nTiles, nColors, amplada, alcada;
-        vector<vector<int>> tiles = llegirTiles(inputTilesFile, nTiles, nColors, amplada, alcada);
+        vector<Tile> tiles = llegirTiles(inputTilesFile, nTiles, nColors, amplada, alcada);
         const string cleanInputFilename = cleanFilename(inputTilesFile);
         vector<bool> varsSolucio = llegirResultatMinisat(minisatFilename);
         if(varsSolucio.size() > 0){
