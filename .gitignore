@@ -2,6 +2,7 @@
 /gitignore
 /obj
 /tmp
+/output
 *.depend
 *.layout
 

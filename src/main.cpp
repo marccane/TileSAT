@@ -4,7 +4,7 @@
 #include <filesystem>
 #include "clausules.h"
 
-using namespace std;
+using std::vector, std::endl;
 namespace fs = std::filesystem;
 
 struct Tile{
@@ -27,6 +27,7 @@ void generarClausCondicionalHor(unsigned initVar, const vector<Tile> &inputTiles
             if(ourTile.est==tmpTile.oest)
                 clausula.push_back(initVar+numVarsPerCasella+i);
         }
+
         c.addClause(clausula);
     }
 }
@@ -68,12 +69,10 @@ void generarTiles(Clausules &clausules, const int amplada, const int alcada, con
     for(int i=0;i<alcada;i++){ //per cada fila
         for(int j=0;j<amplada;j++){ //per cada columna
             const int pos=(i*amplada+j)*numVarsPerCasella+1; //ULL
-            if(j!=amplada-1){ //si no es ultima columna condicionem laterals
+            if(j!=amplada-1) //si no es ultima columna condicionem laterals
                 generarClausCondicionalHor(pos, inputTiles, clausules);
-            }
-            if(i!=alcada-1){ //si no es ultima fila condicionem inferiors
+            if(i!=alcada-1) //si no es ultima fila condicionem inferiors
                 generarClausCondicionalVertical(pos, amplada, inputTiles, clausules);
-            }
         }
     }
 }
@@ -92,7 +91,7 @@ vector<Tile> llegirTiles(string filename, int &numTiles, int &numColors, int &am
 
     for(int i=0;i<numTiles;i++){
         decltype(stubTile->nord) tile[NUM_TILE_ELEMENTS];
-        for(int i=0;i<4;i++)
+        for(int i=0;i<NUM_TILE_ELEMENTS;i++)
             file >> tile[i];
         tiles.push_back(*reinterpret_cast<Tile*>(tile));
     }
@@ -146,29 +145,23 @@ vector<bool> llegirResultatMinisat(const string &filename){
     return varsSolucio;
 }
 
-void mostrarSolucio(int alcada, int amplada, const vector<bool> &varsSolucio, int numTiles){
+void mostrarSolucio(const vector<vector<int>> &tilesSolucio, int alcada, int amplada, int numTiles){
 
-    if(!varsSolucio.empty()){
-        for(int i=0;i<alcada;i++){
-            for(int j=0;j<amplada;j++){
-                const int valor = getVariable(amplada, numTiles, varsSolucio, i, j);
-                cout<<valor<<' ';
-            }
-            cout<<endl;
-        }
+    for(int i=0;i<alcada;i++){
+        for(int j=0;j<amplada;j++)
+            cout<<tilesSolucio[j][i]<<' ';
+        cout<<endl;
     }
     cout<<endl;
 }
 
-void guardarSolucioTiles(string filename, int alcada, int amplada, const vector<bool> &varsSolucio, int numTiles){
+void guardarSolucioTiles(string filename, const vector<vector<int>> &tilesSolucio, int alcada, int amplada, int numTiles){
 
-    ofstream file;
-    file.open(filename);
+    ofstream file(filename);
 
     for(int i=0;i<alcada;i++){
         for(int j=0;j<amplada;j++){
-            const int valor = getVariable(amplada, numTiles, varsSolucio, i, j);
-            file<<valor<<' ';
+            file<<tilesSolucio[j][i]<<' ';
         }
         file<<endl;
     }
@@ -191,7 +184,6 @@ bool comprovarSolucio(const vector<Tile> &tiles, const vector<vector<int>> &tile
     for(int i=0;i<amplada-1;i++){
         for(int j=0;j<alcada-1;j++){
             const auto &tileActual = tiles[tilesSolucio[i][j]-1];
-            //cout<<"i:"<<i<<"j:"<<j<<"tilesSol[i+1][j]:"<<tilesSolucio[i+1][j]<<endl;
             const auto &tileDreta = tiles[tilesSolucio[i+1][j]-1];
             const auto &tileInferior = tiles[tilesSolucio[i][j+1]-1];
 
@@ -217,18 +209,27 @@ std::vector<std::string> split(const std::string& s, char delimiter)
    return tokens;
 }
 
-string cleanFilename(string filename){
+string cleanFilename(const string &filename){
 
     const auto filenameSplit1 = split(filename, '/'); //!fixme: hardcoded linux path sep.
     const auto filenameSplit2 = split(filenameSplit1.back(), '.');
     return filenameSplit2[0];
 }
 
+void createFolderIfDoesntExist(const string &folderName){
+    if(!fs::is_directory(folderName)){
+        if(!fs::exists(folderName)){
+            cout<<"Creating "<<folderName<<" folder"<<endl;
+            fs::create_directory(folderName);
+        }
+        else throw folderName + " is not a folder";
+    }
+}
+
 void doTiles(const string &inputTilesFile, bool printSolution, bool checkSolution, bool drawTiles, bool solve=true, int ampladaOverride=-1, int alcadaOverride=-1){
 
     Clausules clausules;
     vector<Tile> tiles; //ULL! les tiles van de 0..nTiles, pero tilesSolucio va de 1..=nTiles
-    vector<bool> varsSolucio;
     int nTiles, nColors, amplada, alcada;
     const string cleanInputFilename = cleanFilename(inputTilesFile);
 
@@ -241,14 +242,7 @@ void doTiles(const string &inputTilesFile, bool printSolution, bool checkSolutio
     generarTiles(clausules, amplada, alcada, tiles);
     const string tmp_folder = "tmp";
 
-    if(!fs::is_directory(tmp_folder)){
-        if(!fs::exists(tmp_folder)){
-            cout<<"Creating "<<tmp_folder<<" folder"<<endl;
-            fs::create_directory(tmp_folder);
-        }
-        else
-            throw tmp_folder + " is not a folder";
-    }
+    createFolderIfDoesntExist(tmp_folder);
 
     const string cnfFolder = tmp_folder + "/", tempCnfFile = "out.cnf.gz", tempSolFilePath = cnfFolder + "sol.tiles";
     clausules.guardarCNF(cnfFolder + tempCnfFile, amplada*alcada*nTiles, cleanInputFilename, nTiles, nColors, amplada, alcada, false);
@@ -265,25 +259,25 @@ void doTiles(const string &inputTilesFile, bool printSolution, bool checkSolutio
             throw "Error: minisat process has returned " + to_string(resultatMinisat);
         cout<<endl;
 
-        //{
-        varsSolucio = llegirResultatMinisat(cnfFolder + tempCnfOutput);
         vector<vector<int>> tilesSolucio(amplada); //els index extrets d'aquesta estructura comencen per 1! 1..=nTiles
         tilesSolucio.resize(amplada);
         for(auto &fila : tilesSolucio)
             fila.resize(alcada);
-        convertirAMatriuSolucio(varsSolucio, tilesSolucio, alcada, amplada, nTiles);
-        //}
 
-        if(!comprovarSolucio(tiles, tilesSolucio, alcada, amplada, nTiles))
-            throw "Internal error: obtained solution is invalid"; //podria ser un assert
+        convertirAMatriuSolucio(llegirResultatMinisat(cnfFolder + tempCnfOutput), tilesSolucio, alcada, amplada, nTiles);
+
+        if(!comprovarSolucio(tiles, tilesSolucio, alcada, amplada, nTiles)) //podria ser un assert
+            throw "Internal error: obtained solution is invalid";
 
         if(printSolution)
-            mostrarSolucio(alcada, amplada, varsSolucio, nTiles);
+            mostrarSolucio(tilesSolucio, alcada, amplada, nTiles);
 
-        guardarSolucioTiles(tempSolFilePath, alcada, amplada, varsSolucio, nTiles);
+        guardarSolucioTiles(tempSolFilePath, tilesSolucio, alcada, amplada, nTiles);
 
         if(drawTiles){
-            string outputSvg = "output/" + cleanInputFilename + "_" + to_string(amplada) + "_" + to_string(alcada) + ".svg";
+            const string outputFolder = "output";
+            createFolderIfDoesntExist(outputFolder);
+            string outputSvg = outputFolder + "/" + cleanInputFilename + "_" + to_string(amplada) + "_" + to_string(alcada) + ".svg";
             comandaAll = "python3 drawTiles.py " + inputTilesFile + " " + tempSolFilePath + " color " + outputSvg;
 
             int drawRetVal = system(comandaAll.c_str());
@@ -309,9 +303,9 @@ int main(int argc, char** argv)
     if(argc == 1 || argc == 2 && (string(argv[1]) == "-h" || string(argv[1]) == "--help")){
         cout<<"Usage: " << argv[0] << " [Options]...  <TilesProblemFile>" <<endl;
         cout<<"Options:"<<endl;
-        cout<<"     -p      printSolution in ascii"<<endl;
+        cout<<"     -p      print solution in console"<<endl;
         //cout<<"     -c      checkSolution (requires python and checkSolution.py)"<<endl;
-        cout<<"     -d      drawTiles (requires python, drawTiles.py and it's deps.)"<<endl;
+        cout<<"     -d      drawTiles (requires python3 in PATH, drawTiles.py and it's deps.)"<<endl;
         cout<<"     -g      don't solve, only generate cnf. Invalidates other options"<<endl;
         //cout<<"     -t      (special) transform minisat output to tiles solution. format: "<<argv[0]<<" -t <TilesProblemFile> <MiniSAT output>"<<endl;
         parametresOk = false;
@@ -348,13 +342,12 @@ int main(int argc, char** argv)
         string minisatFilename = argv[3];
 
         int nTiles, nColors, amplada, alcada;
+        vector<vector<int>> tilesSolucio;
         vector<Tile> tiles = llegirTiles(inputTilesFile, nTiles, nColors, amplada, alcada);
         const string cleanInputFilename = cleanFilename(inputTilesFile);
-        vector<bool> varsSolucio = llegirResultatMinisat(minisatFilename);
-        if(varsSolucio.size() > 0){
-            string outFilename = cleanInputFilename + "_" + to_string(amplada) + "_" + to_string(alcada) + ".tiles";
-            guardarSolucioTiles(outFilename, alcada, amplada, varsSolucio, nTiles);
-        }
+        convertirAMatriuSolucio(llegirResultatMinisat(minisatFilename), tilesSolucio, alcada, amplada, nTiles);
+        string outFilename = cleanInputFilename + "_" + to_string(amplada) + "_" + to_string(alcada) + ".tiles";
+        guardarSolucioTiles(outFilename, tilesSolucio, alcada, amplada, nTiles);
     }
 
     if(parametresOk)
