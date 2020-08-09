@@ -27,7 +27,6 @@ void generarClausCondicionalHor(unsigned initVar, const vector<Tile> &inputTiles
             if(ourTile.est==tmpTile.oest)
                 clausula.push_back(initVar+numVarsPerCasella+i);
         }
-
         c.addClause(clausula);
     }
 }
@@ -89,7 +88,7 @@ vector<Tile> llegirTiles(string filename, int &numTiles, int &numColors, int &am
 
     file >> numTiles >> numColors >> amplada >> alcada;
 
-    for(int i=0;i<numTiles;i++){
+    for(int _=0;_<numTiles;_++){
         decltype(stubTile->nord) tile[NUM_TILE_ELEMENTS];
         for(int i=0;i<NUM_TILE_ELEMENTS;i++)
             file >> tile[i];
@@ -145,7 +144,7 @@ vector<bool> llegirResultatMinisat(const string &filename){
     return varsSolucio;
 }
 
-void mostrarSolucio(const vector<vector<int>> &tilesSolucio, int alcada, int amplada, int numTiles){
+void mostrarSolucio(const vector<vector<int>> &tilesSolucio, int alcada, int amplada){
 
     for(int i=0;i<alcada;i++){
         for(int j=0;j<amplada;j++)
@@ -155,7 +154,7 @@ void mostrarSolucio(const vector<vector<int>> &tilesSolucio, int alcada, int amp
     cout<<endl;
 }
 
-void guardarSolucioTiles(string filename, const vector<vector<int>> &tilesSolucio, int alcada, int amplada, int numTiles){
+void guardarSolucioTiles(string filename, const vector<vector<int>> &tilesSolucio, int alcada, int amplada){
 
     ofstream file(filename);
 
@@ -179,7 +178,7 @@ void convertirAMatriuSolucio(const vector<bool> &varsSolucio, vector<vector<int>
 }
 
 //Post: retorna cert si la solucio és correcte, fals en c.c.
-bool comprovarSolucio(const vector<Tile> &tiles, const vector<vector<int>> &tilesSolucio, int alcada, int amplada, int numTiles){
+bool comprovarSolucio(const vector<Tile> &tiles, const vector<vector<int>> &tilesSolucio, int alcada, int amplada){
 
     for(int i=0;i<amplada-1;i++){
         for(int j=0;j<alcada-1;j++){
@@ -241,7 +240,6 @@ void doTiles(const string &inputTilesFile, bool printSolution, bool checkSolutio
 
     generarTiles(clausules, amplada, alcada, tiles);
     const string tmp_folder = "tmp";
-
     createFolderIfDoesntExist(tmp_folder);
 
     const string cnfFolder = tmp_folder + "/", tempCnfFile = "out.cnf.gz", tempSolFilePath = cnfFolder + "sol.tiles";
@@ -266,13 +264,13 @@ void doTiles(const string &inputTilesFile, bool printSolution, bool checkSolutio
 
         convertirAMatriuSolucio(llegirResultatMinisat(cnfFolder + tempCnfOutput), tilesSolucio, alcada, amplada, nTiles);
 
-        if(!comprovarSolucio(tiles, tilesSolucio, alcada, amplada, nTiles)) //podria ser un assert
+        if(checkSolution && !comprovarSolucio(tiles, tilesSolucio, alcada, amplada)) //podria ser un assert
             throw "Internal error: obtained solution is invalid";
 
         if(printSolution)
-            mostrarSolucio(tilesSolucio, alcada, amplada, nTiles);
+            mostrarSolucio(tilesSolucio, alcada, amplada);
 
-        guardarSolucioTiles(tempSolFilePath, tilesSolucio, alcada, amplada, nTiles);
+        guardarSolucioTiles(tempSolFilePath, tilesSolucio, alcada, amplada);
 
         if(drawTiles){
             const string outputFolder = "output";
@@ -295,12 +293,12 @@ int main(int argc, char** argv)
 
     bool parametresOk = true;
     bool printSolution = false;
-    bool checkSolution = false;
+    bool checkSolution = true;
     bool drawTiles = false;
     bool onlyTransform = false;
     bool solve = true;
 
-    if(argc == 1 || argc == 2 && (string(argv[1]) == "-h" || string(argv[1]) == "--help")){
+    if(argc == 1 || (argc == 2 && (string(argv[1]) == "-h" || string(argv[1]) == "--help"))){
         cout<<"Usage: " << argv[0] << " [Options]...  <TilesProblemFile>" <<endl;
         cout<<"Options:"<<endl;
         cout<<"     -p      print solution in console"<<endl;
@@ -347,7 +345,7 @@ int main(int argc, char** argv)
         const string cleanInputFilename = cleanFilename(inputTilesFile);
         convertirAMatriuSolucio(llegirResultatMinisat(minisatFilename), tilesSolucio, alcada, amplada, nTiles);
         string outFilename = cleanInputFilename + "_" + to_string(amplada) + "_" + to_string(alcada) + ".tiles";
-        guardarSolucioTiles(outFilename, tilesSolucio, alcada, amplada, nTiles);
+        guardarSolucioTiles(outFilename, tilesSolucio, alcada, amplada);
     }
 
     if(parametresOk)
