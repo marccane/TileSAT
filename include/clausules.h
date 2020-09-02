@@ -2,9 +2,6 @@
 #define CLAUSULES_H
 #include <vector>
 #include <sstream>
-/*#include <boost/iostreams/filtering_streambuf.hpp>
-#include <boost/iostreams/copy.hpp>
-#include <boost/iostreams/filter/gzip.hpp>*/
 
 using namespace std;
 

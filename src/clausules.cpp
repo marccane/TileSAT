@@ -4,7 +4,7 @@
 #include <sstream>
 #include "clausules.h"
 
-using namespace std;
+using std::vector;
 
 Clausules::Clausules()
 {
@@ -16,11 +16,6 @@ void Clausules::addClause(const vector<int>& clause){
 }
 
 void Clausules::addAMO(const vector<int>& vars){
-    /*cout<<"AMO: ";
-    for(int v : vars)
-        cout<<v<<" ";
-    cout<<endl;*/
-
     vector<int> temp;
     int len=vars.size();
     for(int i=0;i<len-1;i++){
@@ -38,14 +33,7 @@ void Clausules::addEO(const vector<int>& vars){
     addAMO(vars);
 }
 
-/*int* crash=nullptr;
-    *crash=123;*/
-
 void Clausules::addALO(const vector<int>& vars){
-    /*cout<<"ALO: ";
-    for(int v : vars)
-        cout<<v<<" ";
-    cout<<endl;*/
     addClause(vars);
 }
 
@@ -100,23 +88,6 @@ void Clausules::guardarCNF(const string &filename, int numvars, const string &cl
         }
     }
     file.close();
-
-    /*namespace bio = boost::iostreams;
-
-    std::stringstream compressed;
-    std::stringstream origin(filename);
-
-    bio::filtering_streambuf<bio::input> out;
-    out.push(bio::gzip_compressor(bio::gzip_params(bio::gzip::best_compression)));
-    out.push(origin);
-    bio::copy(out, compressed);
-
-    ofstream file;
-    file.open(filename);
-
-    file << compressed.str() << endl;
-
-    file.close();*/
 }
 
 void Clausules::netejarClausules(){
