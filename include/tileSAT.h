@@ -7,8 +7,9 @@
 class TileSAT
 {
     public:
-        TileSAT();
-        void doTiles(const string &inputTilesFile, bool printSolution, bool checkSolution, bool drawTiles, bool solve=true, int ampladaOverride=-1, int alcadaOverride=-1);
+        TileSAT(const string &);
+        TileSAT(const string &, int, int);
+        void doTiles(bool printSolution, bool drawTiles, bool solve=true);
 
     private:
         void generarTiles();
@@ -31,10 +32,11 @@ class TileSAT
             return i;
         }
 
+        const string &inputTilesFile;
         int nTiles, nColors, amplada, alcada; //parametres de la instancia
-        vector<Tile> inputTiles; //tiles d'entrada de la instancia
+        vector<Tile> inputTiles; //tiles d'entrada de la instancia. Rang 0..nTiles
         Clausules clausules; //clausules en CNF generades que representen les restriccions de la instancia
-        vector<vector<int>> tilesSolucio; //matriu solucio. Cada enter és un index d'una tile
+        vector<vector<int>> tilesSolucio; //matriu solucio. Cada enter és un index d'una tile. Rang dels index: 1..=nTiles
 
 };
 

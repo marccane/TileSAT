@@ -7,9 +7,16 @@ using std::cout, std::endl;
 const Tile *stubTile;
 constexpr int NUM_TILE_ELEMENTS = sizeof(*stubTile)/sizeof(stubTile->nord);
 
-TileSAT::TileSAT()
+TileSAT::TileSAT(const string &inputFile): inputTilesFile(inputFile)
 {
-    //ctor
+    inputTiles = llegirTiles(inputTilesFile);
+}
+
+TileSAT::TileSAT(const string &inputFile, int ampladaOverride, int alcadaOverride): inputTilesFile(inputFile)
+{
+    inputTiles = llegirTiles(inputTilesFile);
+    amplada = ampladaOverride;
+    alcada = alcadaOverride;
 }
 
 void TileSAT::generarClausCondicionalHor(unsigned initVar){
@@ -100,27 +107,18 @@ vector<bool> TileSAT::llegirResultatMinisat(const string &filename) const{
     //obrir arxiu filename i llegir el resultat de minisat
     ifstream file(filename);
     string buff;
-    bool sat = false;
     vector<bool> varsSolucio;
 
     file >> buff;
-    if(buff == "SAT")
-         sat = true;
-    else if(buff == "UNSAT")
-        throw "Error: UNSAT, no solution found";
-    else if(buff == "INDET")
-        throw "Error: Minisat computation interrupted/out of memory";
-    else
+    if(buff != "SAT")
         throw "Error: Invalid minisat file format";
 
-    if(sat){
-        //posicio 0 stub
-        varsSolucio.push_back(false);
-        do{
-            file >> buff;
-            varsSolucio.push_back(buff[0]!='-');
-        }while(!file.eof());
-    }
+    //posicio 0 stub
+    varsSolucio.push_back(false);
+    do{
+        file >> buff;
+        varsSolucio.push_back(buff[0]!='-');
+    }while(!file.eof());
 
     return varsSolucio;
 }
@@ -174,18 +172,9 @@ bool TileSAT::comprovarSolucio() const{
     return true;
 }
 
-void TileSAT::doTiles(const string &inputTilesFile, bool printSolution, bool checkSolution, bool drawTiles, bool solve, int ampladaOverride, int alcadaOverride){
+void TileSAT::doTiles(bool printSolution, bool drawTiles, bool solve){
 
-    //Clausules clausules;
-    //vector<Tile> tiles; //ULL! les tiles van de 0..nTiles, pero tilesSolucio va de 1..=nTiles
-    //int nTiles, nColors, amplada, alcada;
     const string cleanInputFilename = cleanFilename(inputTilesFile);
-
-    inputTiles = llegirTiles(inputTilesFile);
-    if(ampladaOverride != -1)
-        amplada = ampladaOverride;
-    if(alcadaOverride != -1)
-        alcada = alcadaOverride;
 
     generarTiles();
     const string tmp_folder = "tmp";
@@ -202,18 +191,26 @@ void TileSAT::doTiles(const string &inputTilesFile, bool printSolution, bool che
         if(noMinisatOutput)
             comandaAll += ignoreMinisatOutput;
         int resultatMinisat = system(comandaAll.c_str());
-        if(resultatMinisat != 2560)
-            throw "Error: minisat process has returned " + to_string(resultatMinisat);
+
+        if(resultatMinisat == 2560)
+            cout<<"Solution found!"<<endl;
+        else if(resultatMinisat == 5120)
+            throw "Error: UNSAT, no solution found";
+        else if(resultatMinisat == 0)
+            throw "Error: Minisat computation interrupted/out of memory";
+        else if(resultatMinisat == 32512)
+            throw "Error: Minisat not found";
+        else
+            throw "Unknown minisat error. Process has returned " + to_string(resultatMinisat);
         cout<<endl;
 
-        //vector<vector<int>> tilesSolucio(amplada); //els index extrets d'aquesta estructura comencen per 1. El rang és 1..=nTiles
         tilesSolucio.resize(amplada);
         for(auto &fila : tilesSolucio)
             fila.resize(alcada);
 
         convertirAMatriuSolucio(llegirResultatMinisat(cnfFolder + tempCnfOutput));
 
-        if(checkSolution && !comprovarSolucio())
+        if(!comprovarSolucio())
             throw "Internal error: obtained solution is invalid";
 
         if(printSolution)
@@ -228,10 +225,12 @@ void TileSAT::doTiles(const string &inputTilesFile, bool printSolution, bool che
             comandaAll = "python3 drawTiles.py " + inputTilesFile + " " + tempSolFilePath + " color " + outputSvg;
 
             int drawRetVal = system(comandaAll.c_str());
-            if(drawRetVal != 0)
-                throw "Error generating SVG. drawTiles.py returned " + to_string(drawRetVal);
-            else
+            if(drawRetVal == 0)
                 cout<<"SVG saved at "<<outputSvg<<endl;
+            else if(drawRetVal == 32512)
+                throw "Error: python3 not found";
+            else
+                throw "Error generating SVG. drawTiles.py returned " + to_string(drawRetVal);
         }
     }
 }

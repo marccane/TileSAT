@@ -60,13 +60,13 @@
 			<Add option="-fexceptions" />
 		</Compiler>
 		<Unit filename="include/clausules.h" />
-		<Unit filename="include/tile" />
 		<Unit filename="include/tile.h" />
 		<Unit filename="include/tileSAT.h" />
 		<Unit filename="include/utils.h" />
 		<Unit filename="src/clausules.cpp" />
 		<Unit filename="src/main.cpp" />
 		<Unit filename="src/tileSAT.cpp" />
+		<Unit filename="src/utils.cpp" />
 		<Extensions />
 	</Project>
 </CodeBlocks_project_file>

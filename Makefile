@@ -1,5 +1,5 @@
 CXX      := -c++
-CXXFLAGS := -std=c++17 -pedantic-errors -Wall -Wextra #-Werror
+CXXFLAGS := -O2 -std=c++17 -pedantic-errors -Wall -Wextra #-Werror
 LDFLAGS  := -L/usr/lib -lstdc++ -lm -lz
 BUILD    := ./build
 #do NOT blank this var

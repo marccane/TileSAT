@@ -8,7 +8,6 @@ int main(int argc, char** argv)
 
     bool parametresOk = true;
     bool printSolution = false;
-    bool checkSolution = true;
     bool drawTiles = false;
     bool onlyTransform = false;
     bool solve = true;
@@ -17,8 +16,7 @@ int main(int argc, char** argv)
         cout<<"Usage: " << argv[0] << " [Options]...  <TilesProblemFile>" <<endl;
         cout<<"Options:"<<endl;
         cout<<"     -p      print solution in console"<<endl;
-        //cout<<"     -c      checkSolution (requires python and checkSolution.py)"<<endl;
-        cout<<"     -d      drawTiles (requires python3 in PATH, drawTiles.py and it's deps.)"<<endl;
+        cout<<"     -d      drawTiles (requires python3, drawTiles.py, tkinter and canvasvg)"<<endl;
         cout<<"     -g      don't solve, only generate cnf. Invalidates other options"<<endl;
         //cout<<"     -t      (special) transform minisat output to tiles solution. format: "<<argv[0]<<" -t <TilesProblemFile> <MiniSAT output>"<<endl;
         parametresOk = false;
@@ -30,8 +28,6 @@ int main(int argc, char** argv)
             string act = argv[i];
             if(act=="-d")
                 drawTiles = true;
-            else if(act=="-c")
-                checkSolution = true;
             else if(act=="-p")
                 printSolution = true;
             else if(act=="-g")
@@ -49,8 +45,8 @@ int main(int argc, char** argv)
             i++;
         }
     }
-
-    /*if(onlyTransform){ //todo: fix this
+    /*
+    if(onlyTransform){ //todo: fix this
         inputTilesFile = argv[2];
         string minisatFilename = argv[3];
 
@@ -65,9 +61,9 @@ int main(int argc, char** argv)
 
     if(parametresOk)
         try{
-            TileSAT tileSAT;
-            tileSAT.doTiles(inputTilesFile, printSolution, checkSolution, drawTiles, solve);
-        }catch(const char* c){
+            TileSAT tileSAT(inputTilesFile);
+            tileSAT.doTiles(printSolution, drawTiles, solve);
+        } catch(const char* c){
             cerr << c << endl;
             return 0x10;
         } catch(string s){
