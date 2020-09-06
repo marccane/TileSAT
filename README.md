@@ -18,8 +18,11 @@ sudo pip3 install canvasvg
 ```
 
 ### Installing dependencies on Arch based distros
+In arch you should get `minisat` from the aur package, but it's currently broken and it doesn't look like it's going to be fixed soon.
+You can build it from [this](https://github.com/Udopia/minisat) branch. Remember to add it to your PATH.
+ 
 ```
-sudo pacman -S zlib minisat python-pip (tk no cal??)
+sudo pacman -S zlib python-pip
 sudo pip3 install canvasvg
 ```
 
@@ -42,13 +45,25 @@ build/tileSAT -d input/aperiodic11
 xdg-open output/aperiodic11_*
 ```
 
-
 ## Usage
+
+Usage: `tileSAT [Options]...  <TilesProblemFile>`
+Options:
+*    -p      print solution in console
+*    -d      drawTiles (requires python3, drawTiles.py, tkinter and canvasvg)
+*    -g      don't solve, only generate cnf. Invalidates other options
+
+## Input format
+The first line contains 4 parameters: number of tiles (*nTiles*), number of colors (*nColors*), width and height.
+The next *nTiles* lines contain the colors of each tile.
+Each line contains 4 integers, separated by space, which are the index of the colour of each side of the tile, starting from north/up and rotating clockwise.
+Color indices range from 1 to *nColors* (inclusive).
 
 ## Limitations/quirks
 * The program assumes you have minisat installed in your PATH
 * The -d parameter assumes you have python3 in your PATH
 * drawTiles.py has to be present in the current directory
+* `-g` option creates the gziped cnf file in tmp/out.cnf.gz
 
 ## TODO (or not)
 * Explore if the SVG can be created without a graphic enviroment
