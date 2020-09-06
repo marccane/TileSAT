@@ -6,7 +6,7 @@ A python script made by Pol Barrachina that can be used to draw the solutions is
 ## Building
 
 To build you'll need a `C++17` compiler, `make` and the `gzip` library, all of which are readily available for most distros.
-Optionally to draw the solutions as SVG images you'll need `Python3`, the library `tkinter` and a graphic enviroment. 
+You need the minisat solver installed. Optionally to draw the solutions as SVG images you'll need `Python3`, the library `tkinter` and a graphic enviroment. 
 
 `tkinter` and `canvasvg` are only required if you want to draw the solutions.
 `pip3` is the easiest way to install `canvasvg`.
@@ -18,7 +18,7 @@ sudo pip3 install canvasvg
 ```
 
 ### Installing dependencies on Arch based distros
-In arch you should get `minisat` from the aur package, but it's currently broken and it doesn't look like it's going to be fixed soon.
+In arch you should get `minisat` from the aur package but it's currently broken and it doesn't look like it's going to be fixed soon.
 You can build it from [this](https://github.com/Udopia/minisat) branch. Remember to add it to your PATH.
  
 ```
