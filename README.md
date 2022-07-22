@@ -3,6 +3,8 @@ Reduces the Wang tiles problem, aka Wang dominoes, to CNF SAT and solves it with
 
 A python script made by Pol Barrachina that can be used to draw the solutions is also included.
 
+![aperiodic11_40_40](https://user-images.githubusercontent.com/7304787/180378181-779fb726-a7ae-4905-8571-f59e42f8967a.svg "Aperiodic 11 tiles 40x40 solution")
+
 ## Building
 
 To build you'll need a `C++17` compiler, `make` and the `gzip` library, all of which are readily available for most distros.
