@@ -3,7 +3,7 @@ Reduces the Wang tiles problem, aka Wang dominoes, to CNF SAT and solves it with
 
 A python script made by Pol Barrachina that can be used to draw the solutions is also included.
 
-![aperiodic11_40_40](https://user-images.githubusercontent.com/7304787/180378181-779fb726-a7ae-4905-8571-f59e42f8967a.svg "Aperiodic 11 tiles 40x40 solution")
+![aperiodic11_40_40](https://user-images.githubusercontent.com/7304787/180378181-779fb726-a7ae-4905-8571-f59e42f8967a.svg "One solution to the Aperiodic 11 tiles size 40x40")
 
 ## Building
 
@@ -20,11 +20,8 @@ sudo pip3 install canvasvg
 ```
 
 ### Installing dependencies on Arch based distros
-In arch you should get `minisat` from the aur package but it's currently broken and it doesn't look like it's going to be fixed soon.
-You can build it from [this](https://github.com/Udopia/minisat) branch. Remember to add it to your PATH.
- 
 ```
-sudo pacman -S zlib python-pip
+sudo pacman -S minisat zlib python-pip
 sudo pip3 install canvasvg
 ```
 
